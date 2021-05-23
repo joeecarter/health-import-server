@@ -1,2 +1,2 @@
-# health-export-server
+# health-import-server
 Storage backend for https://www.healthexportapp.com
