@@ -49,16 +49,3 @@ func writeRequestFile(b []byte) {
 		fmt.Printf("Failed to write $CWD/request.json err = '%s'.\n", err)
 	}
 }
-
-func createTempFile(b []byte) {
-	f, err := ioutil.TempFile("", "*.json")
-	if err != nil {
-		panic("Failed to save temp file: " + err.Error())
-	}
-	fmt.Printf("Request saved to file: %s\n", f.Name())
-
-	_, err = f.Write(b)
-	if err != nil {
-		panic("Failed to write to temp file: " + err.Error())
-	}
-}

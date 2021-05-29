@@ -7,26 +7,38 @@ import (
 
 var LogUnknownMetrics = false
 
+type APIExportRequest struct {
+	Metrics []Metric `json:"name"`
+}
+
+func (req *APIExportRequest) TotalSamples() int {
+	total := 0
+	for _, metric := range req.Metrics {
+		total += len(metric.Samples)
+	}
+	return total
+}
+
 type Metric struct {
 	Name    string   `json:"name"`
 	Unit    string   `json:"unit"`
 	Samples []Sample `json:"samples"`
 }
 
-type Parser struct {
-	b []byte
-}
-
-func Parse(b []byte) ([]Metric, error) {
+func Parse(b []byte) (*APIExportRequest, error) {
 	p := NewParser(b)
 	return p.Parse()
+}
+
+type Parser struct {
+	b []byte
 }
 
 func NewParser(b []byte) *Parser {
 	return &Parser{b}
 }
 
-func (p *Parser) Parse() ([]Metric, error) {
+func (p *Parser) Parse() (*APIExportRequest, error) {
 	j, err := parseJSONRequest(p.b)
 	if err != nil {
 		return nil, err
@@ -41,7 +53,9 @@ func (p *Parser) Parse() ([]Metric, error) {
 		metrics = append(metrics, metric)
 	}
 
-	return metrics, nil
+	return &APIExportRequest{
+		Metrics: metrics,
+	}, nil
 }
 
 func (p *Parser) ParseMetric(jm jsonMetric) (Metric, error) {
@@ -95,5 +109,6 @@ func (p *Parser) logUnknownMetric(metricName string, rawSamples []json.RawMessag
 	if example != nil {
 		exampleString = string(example)
 	}
+
 	log.Printf("Encountered unknown metric '%s' example = %s\n\n", metricName, exampleString)
 }

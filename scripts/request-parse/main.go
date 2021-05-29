@@ -25,14 +25,14 @@ func main() {
 	}
 
 	request.LogUnknownMetrics = true
-	metrics, err := request.Parse(b)
+	req, err := request.Parse(b)
 	//_, err = request.Parse(b)
 	if err != nil {
 		panic("Failed to parse MetricUpload err = " + err.Error())
 	}
 
 	if shouldLogJson {
-		printJson(metrics)
+		printJson(req.Metrics)
 	}
 }
 
