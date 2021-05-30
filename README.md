@@ -38,7 +38,7 @@ ADD config.json /config/config.json
 (docker-compose works well with this approach)
 
 ## What the metrics look like
-See this file: (sample.go)[/request/sample.go]
+See this file: [sample.go](/request/sample.go)
 
 ## How to use this with Health Export App (aka. API Export)
 1. Run the server on a machine on your local home network.
