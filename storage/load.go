@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/joeecarter/health-import-server/request"
+	"github.com/joeecarter/health-import-server/storage/influxdb"
 	"github.com/joeecarter/health-import-server/storage/jsondirectory"
 )
 
@@ -14,20 +15,21 @@ import (
 // There is a possibility of the same metrics arriving twice so all MetricStores must handle
 // that to avoid storing duplicates.
 type MetricStore interface {
-	Store(metrics []request.Metric) (int, error)
+	Store(metrics []request.Metric) error
 }
 
 type metricStoreLoader func(json.RawMessage) (MetricStore, error)
 
 var metricStoreLoaders = map[string]metricStoreLoader{
 	"json:directory": loadJsonMetricStore,
+	"influxdb":       loadInfluxMetricStore,
 }
 
 type configType struct {
 	Type string `json:"type"`
 }
 
-func LoadMetricStores(filename string) ([]MetricStore, error) {
+func LoadMetricStores(filename string) (map[string]MetricStore, error) {
 	configs := make([]json.RawMessage, 0)
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -39,7 +41,7 @@ func LoadMetricStores(filename string) ([]MetricStore, error) {
 		return nil, err
 	}
 
-	metricStores := make([]MetricStore, 0)
+	metricStores := make(map[string]MetricStore)
 	for _, config := range configs {
 		loaderType, err := getConfigType(config)
 		if err != nil {
@@ -57,7 +59,8 @@ func LoadMetricStores(filename string) ([]MetricStore, error) {
 			return nil, err
 		}
 
-		metricStores = append(metricStores, metricStore)
+		// TODO: Is this valid? Is there a case where someone may want multiple stores of the same type?
+		metricStores[loaderType] = metricStore
 	}
 
 	return metricStores, nil
@@ -69,6 +72,14 @@ func loadJsonMetricStore(msg json.RawMessage) (MetricStore, error) {
 		return nil, err
 	}
 	return jsondirectory.NewJsonDirMetricStore(config), nil
+}
+
+func loadInfluxMetricStore(msg json.RawMessage) (MetricStore, error) {
+	var config influxdb.InfluxConfig
+	if err := json.Unmarshal(msg, &config); err != nil {
+		return nil, err
+	}
+	return influxdb.NewInfluxMetricStore(config), nil
 }
 
 func getConfigType(msg json.RawMessage) (string, error) {

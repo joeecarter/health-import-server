@@ -23,13 +23,13 @@ func NewJsonDirMetricStore(config JsonDirConfig) *JsonDirMetricStore {
 	return &JsonDirMetricStore{config}
 }
 
-func (store *JsonDirMetricStore) Store(metrics []request.Metric) (int, error) {
+func (store *JsonDirMetricStore) Store(metrics []request.Metric) error {
 	// TODO: Implement
 	fmt.Println("TODO: Implement innit")
 
 	dirName := strings.Replace(time.Now().Format(time.RFC3339), ":", "_", -1)
 	fmt.Println("dirName =", dirName)
-	return 0, nil
+	return nil
 
 	//lookup, err := readLookupFile(store.lookupFilePath())
 	//if err != nil {

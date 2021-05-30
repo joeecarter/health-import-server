@@ -13,7 +13,7 @@ import (
 )
 
 var addr string
-var metricStores []storage.MetricStore
+var metricStores map[string]storage.MetricStore
 
 func init() {
 	flag.StringVar(&addr, "addr", ":8080", "the address to start the api on e.g. ':8080'")
@@ -27,6 +27,11 @@ func init() {
 	metricStores, err = storage.LoadMetricStores(configFilePath)
 	if err != nil {
 		log.Fatalf("Failed to load metric stores: %s.\n", err.Error())
+	}
+
+	if len(metricStores) == 0 {
+		log.Fatalln("You have zero metric stores configured")
+		os.Exit(1)
 	}
 }
 
@@ -59,11 +64,13 @@ func apiExportHandler(req *http.Request) (string, error) {
 	log.Printf("Total metrics: %d (%d populated) Total samples %d\n", len(export.Metrics), len(populatedMetrics), export.TotalSamples())
 
 	// TODO: May want to not fail fast here? run all metric stores before erroring to avoid data loss?
-	for _, metricStore := range metricStores {
-		_, err = metricStore.Store(populatedMetrics)
-		if err != nil {
+	for metricStoreType, metricStore := range metricStores {
+		log.Printf("Starting upload to metric store \"%s\".", metricStoreType)
+		if metricStore.Store(populatedMetrics); err != nil {
+			log.Printf("Failed upload to metric store \"%s\" with error: %s.", metricStoreType, err.Error())
 			return "", err
 		}
+		log.Printf("Finished upload to metric store \"%s\".", metricStoreType)
 	}
 
 	return "Processed request.", nil
