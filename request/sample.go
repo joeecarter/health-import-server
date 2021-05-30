@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-const dateLayout = "2006-01-02 15:04:05 -0700"
+const DateLayout = "2006-01-02 15:04:05 -0700"
 
 type SampleTimestamp struct {
 	t time.Time
@@ -17,7 +17,7 @@ func (st *SampleTimestamp) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	t, err := time.Parse(dateLayout, s)
+	t, err := time.Parse(DateLayout, s)
 	if err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func (st *SampleTimestamp) UnmarshalJSON(b []byte) error {
 }
 
 func (st *SampleTimestamp) MarshalJSON() ([]byte, error) {
-	return json.Marshal(st.t.Format(dateLayout))
+	return json.Marshal(st.t.Format(DateLayout))
 }
 
 func (st *SampleTimestamp) ToTime() time.Time {
@@ -34,7 +34,7 @@ func (st *SampleTimestamp) ToTime() time.Time {
 }
 
 func (st *SampleTimestamp) String() string {
-	return st.t.Format(dateLayout)
+	return st.t.Format(DateLayout)
 }
 
 type Sample interface {

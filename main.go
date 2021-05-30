@@ -28,7 +28,6 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to load metric stores: %s.\n", err.Error())
 	}
-	fmt.Println(metricStores)
 }
 
 func main() {
@@ -56,7 +55,16 @@ func apiExportHandler(req *http.Request) (string, error) {
 		return "", err
 	}
 
-	log.Printf("Total metrics: %d (total samples %d)\n", len(export.Metrics), export.TotalSamples())
+	populatedMetrics := export.PopulatedMetrics()
+	log.Printf("Total metrics: %d (%d populated) Total samples %d\n", len(export.Metrics), len(populatedMetrics), export.TotalSamples())
+
+	// TODO: May want to not fail fast here? run all metric stores before erroring to avoid data loss?
+	for _, metricStore := range metricStores {
+		_, err = metricStore.Store(populatedMetrics)
+		if err != nil {
+			return "", err
+		}
+	}
 
 	return "Processed request.", nil
 }
@@ -64,12 +72,12 @@ func apiExportHandler(req *http.Request) (string, error) {
 func apiHandler(handler func(*http.Request) (string, error)) http.HandlerFunc {
 	return func(wr http.ResponseWriter, req *http.Request) {
 		msg, err := handler(req)
-		if err != nil {
+		if err == nil {
 			wr.WriteHeader(200)
-			wr.Write([]byte(msg))
+			wr.Write([]byte(msg + "\n"))
 		} else {
 			wr.WriteHeader(500)
-			wr.Write([]byte("ERROR: " + err.Error()))
+			wr.Write([]byte("ERROR: " + err.Error() + "\n"))
 		}
 	}
 }

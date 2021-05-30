@@ -8,15 +8,33 @@ import (
 var LogUnknownMetrics = false
 
 type APIExportRequest struct {
-	Metrics []Metric `json:"name"`
+	Metrics          []Metric `json:"metrics"`
+	populatedMetrics []Metric
 }
 
+// TotalSamples returns the total number of samples across all metrics
 func (req *APIExportRequest) TotalSamples() int {
 	total := 0
-	for _, metric := range req.Metrics {
+	for _, metric := range req.PopulatedMetrics() {
 		total += len(metric.Samples)
 	}
 	return total
+}
+
+// PopulatedMetrics returns only the metrics which have > 0 samples.
+func (req *APIExportRequest) PopulatedMetrics() []Metric {
+	if req.populatedMetrics != nil {
+		return req.populatedMetrics
+	}
+
+	req.populatedMetrics = make([]Metric, 0)
+	for _, metric := range req.Metrics {
+		if len(metric.Samples) == 0 {
+			continue
+		}
+		req.populatedMetrics = append(req.populatedMetrics, metric)
+	}
+	return req.populatedMetrics
 }
 
 type Metric struct {
@@ -46,7 +64,7 @@ func (p *Parser) Parse() (*APIExportRequest, error) {
 
 	metrics := make([]Metric, 0)
 	for _, jsonMetric := range j.Data.Metrics {
-		metric, err := p.ParseMetric(jsonMetric)
+		metric, err := p.parseMetric(jsonMetric)
 		if err != nil {
 			return nil, err
 		}
@@ -58,8 +76,8 @@ func (p *Parser) Parse() (*APIExportRequest, error) {
 	}, nil
 }
 
-func (p *Parser) ParseMetric(jm jsonMetric) (Metric, error) {
-	samples, err := p.ParseSamples(jm.Name, jm.Data)
+func (p *Parser) parseMetric(jm jsonMetric) (Metric, error) {
+	samples, err := ParseSamples(jm.Name, jm.Data)
 	if err != nil {
 		return Metric{}, err
 	}
@@ -71,16 +89,16 @@ func (p *Parser) ParseMetric(jm jsonMetric) (Metric, error) {
 	}, nil
 }
 
-func (p *Parser) ParseSamples(metricName string, rawSamples []json.RawMessage) ([]Sample, error) {
+func ParseSamples(metricName string, rawSamples []json.RawMessage) ([]Sample, error) {
 	metricType := LookupMetricType(metricName)
 	if metricType == MetricTypeUnknown {
-		p.logUnknownMetric(metricName, rawSamples)
+		logUnknownMetric(metricName, rawSamples)
 		return nil, nil
 	}
-	return p.unmarshalSamples(metricType, rawSamples)
+	return unmarshalSamples(metricType, rawSamples)
 }
 
-func (p *Parser) unmarshalSamples(metricType string, rawSamples []json.RawMessage) ([]Sample, error) {
+func unmarshalSamples(metricType string, rawSamples []json.RawMessage) ([]Sample, error) {
 	samples := make([]Sample, len(rawSamples))
 	for i, rawSample := range rawSamples {
 		sample := newEmptySample(metricType)
@@ -95,7 +113,7 @@ func (p *Parser) unmarshalSamples(metricType string, rawSamples []json.RawMessag
 	return samples, nil
 }
 
-func (p *Parser) logUnknownMetric(metricName string, rawSamples []json.RawMessage) {
+func logUnknownMetric(metricName string, rawSamples []json.RawMessage) {
 	if !LogUnknownMetrics {
 		return
 	}
