@@ -8,7 +8,8 @@ import (
 var LogUnknownMetrics = false
 
 type APIExportRequest struct {
-	Metrics          []Metric `json:"metrics"`
+	Metrics          []Metric  `json:"metrics"`
+	Workouts         []Workout `json:"workouts"`
 	populatedMetrics []Metric
 }
 
@@ -72,7 +73,8 @@ func (p *Parser) Parse() (*APIExportRequest, error) {
 	}
 
 	return &APIExportRequest{
-		Metrics: metrics,
+		Metrics:  metrics,
+		Workouts: j.Data.Workouts,
 	}, nil
 }
 
