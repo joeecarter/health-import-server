@@ -1,6 +1,8 @@
 # Health Import Server
 Storage backend for https://www.healthexportapp.com
 
+Official documentation on the JSON format that the request submodule parses can be found here: https://github.com/Lybron/health-auto-export/wiki/API-Export---JSON-Format
+
 Currently just stores the metrics into influxdb but more storage backends (and storing workout data) may be supported in the future.
 
 ## Config file
@@ -32,7 +34,7 @@ docker run -v $(PWD)/config:/config health-import:latest
 
 Or making an image which extends the base image:
 ```
-FROM docker-registry.home/joe/health-import:latest
+FROM health-import:latest
 ADD config.json /config/config.json
 ```
 (docker-compose works well with this approach)
