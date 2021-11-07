@@ -8,7 +8,6 @@ import (
 
 	"github.com/joeecarter/health-import-server/request"
 	"github.com/joeecarter/health-import-server/storage/influxdb"
-	"github.com/joeecarter/health-import-server/storage/jsondirectory"
 )
 
 // MetricStore encapsulates a storage backend for the metrics provided by the Auto Export app.
@@ -21,8 +20,7 @@ type MetricStore interface {
 type metricStoreLoader func(json.RawMessage) (MetricStore, error)
 
 var metricStoreLoaders = map[string]metricStoreLoader{
-	"json:directory": loadJsonMetricStore,
-	"influxdb":       loadInfluxMetricStore,
+	"influxdb": loadInfluxMetricStore,
 }
 
 type configType struct {
@@ -64,14 +62,6 @@ func LoadMetricStores(filename string) (map[string]MetricStore, error) {
 	}
 
 	return metricStores, nil
-}
-
-func loadJsonMetricStore(msg json.RawMessage) (MetricStore, error) {
-	var config jsondirectory.JsonDirConfig
-	if err := json.Unmarshal(msg, &config); err != nil {
-		return nil, err
-	}
-	return jsondirectory.NewJsonDirMetricStore(config), nil
 }
 
 func loadInfluxMetricStore(msg json.RawMessage) (MetricStore, error) {
