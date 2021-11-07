@@ -14,6 +14,7 @@ import (
 // There is a possibility of the same metrics arriving twice so all MetricStores must handle
 // that to avoid storing duplicates.
 type MetricStore interface {
+	Name() string
 	Store(metrics []request.Metric) error
 }
 
@@ -27,7 +28,7 @@ type configType struct {
 	Type string `json:"type"`
 }
 
-func LoadMetricStores(filename string) (map[string]MetricStore, error) {
+func LoadMetricStores(filename string) ([]MetricStore, error) {
 	configs := make([]json.RawMessage, 0)
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -39,8 +40,8 @@ func LoadMetricStores(filename string) (map[string]MetricStore, error) {
 		return nil, err
 	}
 
-	metricStores := make(map[string]MetricStore)
-	for _, config := range configs {
+	metricStores := make([]MetricStore, len(configs))
+	for i, config := range configs {
 		loaderType, err := getConfigType(config)
 		if err != nil {
 			return nil, err
@@ -57,8 +58,7 @@ func LoadMetricStores(filename string) (map[string]MetricStore, error) {
 			return nil, err
 		}
 
-		// TODO: Is this valid? Is there a case where someone may want multiple stores of the same type?
-		metricStores[loaderType] = metricStore
+		metricStores[i] = metricStore
 	}
 
 	return metricStores, nil

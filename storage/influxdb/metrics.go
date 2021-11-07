@@ -10,21 +10,28 @@ import (
 	"github.com/joeecarter/health-import-server/request"
 )
 
+// TODO: Does this need struct tags??
 type InfluxConfig struct {
 	Hostname string `json:"hostname"`
 	Token    string `json:"token"`
 	Org      string `json:"org"`
 	Bucket   string `json:"bucket"`
+	//Debug    bool   `json:"debug"`
 }
 
 type InfluxMetricStore struct {
 	writeAPI api.WriteAPIBlocking
+	//debugLogging bool
 }
 
 func NewInfluxMetricStore(config InfluxConfig) *InfluxMetricStore {
 	client := influxdb2.NewClient(config.Hostname, config.Token)
 	writeAPI := client.WriteAPIBlocking(config.Org, config.Bucket)
-	return &InfluxMetricStore{writeAPI}
+	return &InfluxMetricStore{writeAPI: writeAPI}
+}
+
+func (store *InfluxMetricStore) Name() string {
+	return "influxdb"
 }
 
 func (store *InfluxMetricStore) Store(metrics []request.Metric) error {
@@ -68,3 +75,24 @@ func sampleToPoint(metric request.Metric, sample request.Sample) *write.Point {
 
 	return p
 }
+
+//type FlattenedPoint struct {
+//	Measurement string
+//	Timestamp   time.Time
+//	Fields      map[string]interface{}
+//}
+
+//func logPoint(pt *write.Point) {
+//	flat := FlattenedPoint{}
+//	flat.Measurement = pt.Name()
+//	flat.Timestamp = pt.Time()
+
+//	fields := make(map[string]interface{})
+//	for _, field := range pt.FieldList() {
+//		fields[field.Key] = field.Value
+//	}
+//	flat.Fields = fields
+
+//	b, _ := json.Marshal(flat)
+//	fmt.Println(string(b))
+//}
