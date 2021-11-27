@@ -6,14 +6,13 @@ import (
 	"net/http"
 
 	"github.com/joeecarter/health-import-server/request"
-	"github.com/joeecarter/health-import-server/storage"
 )
 
 type ImportHandler struct {
-	MetricStores []storage.MetricStore
+	MetricStores []MetricStore
 }
 
-func NewImportHandler(metricStores []storage.MetricStore) *ImportHandler {
+func NewImportHandler(metricStores []MetricStore) *ImportHandler {
 	return &ImportHandler{metricStores}
 }
 

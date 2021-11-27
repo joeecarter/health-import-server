@@ -8,29 +8,26 @@ import (
 	"os"
 
 	server "github.com/joeecarter/health-import-server"
-	"github.com/joeecarter/health-import-server/storage"
 )
 
 var addr string
-var metricStores []storage.MetricStore
+var configFilePath string
+
+var metricStores []server.MetricStore
 
 func init() {
-	flag.StringVar(&addr, "addr", ":8080", "the address to start the api on e.g. ':8080'")
-
-	// TODO: Change this to a
-	configFilePath, ok := os.LookupEnv("CONFIG_FILE_PATH") // Should there be a default for this?
-	if !ok {
-		log.Fatalf("Please set the CONFIG_FILE_PATH environment variable.\n")
-	}
+	flag.StringVar(&addr, "addr", ":8080", "The address to start the server on e.g. ':8080'")
+	flag.StringVar(&configFilePath, "config", "", "Path to the config file (optional).")
 
 	var err error
-	metricStores, err = storage.LoadMetricStores(configFilePath)
+	metricStores, err = server.LoadMetricStores(configFilePath)
 	if err != nil {
-		log.Fatalf("Failed to load metric stores: %s.\n", err.Error())
+		fmt.Printf("Failed to load metric stores: %s.\n", err.Error())
+		os.Exit(1)
 	}
 
 	if len(metricStores) == 0 {
-		log.Fatalln("You have zero metric stores configured")
+		printConfigurationExplanation()
 		os.Exit(1)
 	}
 }
@@ -41,8 +38,36 @@ func main() {
 	http.Handle("/upload", server.NewImportHandler(metricStores))
 
 	log.Printf("Starting web server with addr '%s'...\n", addr)
+	log.Printf("Point Auto Export to /upload")
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
 		fmt.Printf("ERROR: %s\n", err)
 	}
+}
+
+func printConfigurationExplanation() {
+	fmt.Printf("You have no metric stores configured.\n\n")
+
+	fmt.Printf("For configuration you have two options:\n")
+	fmt.Printf("1. Environment variables\n")
+	fmt.Printf("2. Config file\n")
+	fmt.Printf("\n")
+
+	fmt.Println("For option 1 you can configure an influxdb by setting these environment variables:")
+	fmt.Println("- INFLUX_HOSTNAME")
+	fmt.Println("- INFLUX_BUCKET")
+	fmt.Println("- INFLUX_TOKEN")
+	fmt.Println("- INFLUX_ORG")
+	fmt.Printf("\n")
+
+	fmt.Println("For option 2 you can set a config file with the --config flag:")
+	fmt.Println("[")
+	fmt.Println("\t{")
+	fmt.Println("\t\t\"type\": \"influxdb\",")
+	fmt.Println("\t\t\"hostname\": \"<your hostname here>\",")
+	fmt.Println("\t\t\"token\": \"<your token here>\",")
+	fmt.Println("\t\t\"org\": \"<your org here>\",")
+	fmt.Println("\t\t\"bucket\": \"<your bucket here>\",")
+	fmt.Println("\t}")
+	fmt.Println("]")
 }
