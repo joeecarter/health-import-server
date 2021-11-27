@@ -20,6 +20,7 @@ var metricStores []server.MetricStore
 func init() {
 	flag.StringVar(&addr, "addr", ":8080", "The address to start the server on e.g. ':8080'")
 	flag.StringVar(&configFilePath, "config", "", "Path to the config file (optional).")
+	flag.Parse()
 
 	var err error
 	metricStores, err = server.LoadMetricStores(configFilePath)
@@ -35,7 +36,6 @@ func init() {
 }
 
 func main() {
-	flag.Parse()
 
 	http.Handle("/upload", server.NewImportHandler(metricStores))
 
