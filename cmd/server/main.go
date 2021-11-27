@@ -10,6 +10,8 @@ import (
 	server "github.com/joeecarter/health-import-server"
 )
 
+var Version = "0.0.0"
+
 var addr string
 var configFilePath string
 
@@ -37,7 +39,7 @@ func main() {
 
 	http.Handle("/upload", server.NewImportHandler(metricStores))
 
-	log.Printf("Starting web server with addr '%s'...\n", addr)
+	log.Printf("Starting health-import-server v%s with addr '%s'...\n", Version, addr)
 	log.Printf("Point Auto Export to /upload")
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
