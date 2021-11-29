@@ -7,10 +7,16 @@ fi
 echo "version=$VERSION"
 echo ""
 
-docker build --build-arg VERSION=$VERSION -t joecarter/health-import-server:$VERSION .
-docker tag joecarter/health-import-server:$VERSION joecarter/health-import-server:latest
+docker buildx create --name healthimport
+docker buildx use healthimport
+docker buildx inspect --bootstrap
 
-echo ""
-echo "To publish the images:"
-echo "docker push joecarter/health-import-server:$VERSION"
-echo "docker push joecarter/health-import-server:latest"
+docker buildx build \
+	--push \
+	--build-arg VERSION=$VERSION \
+	--platform linux/amd64,linux/arm64,linux/arm/v7 \
+	-t joecarter/health-import-server:$VERSION \
+	-t joecarter/health-import-server:latest \
+	--push .
+
+docker buildx rm healthimport
