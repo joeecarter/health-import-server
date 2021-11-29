@@ -10,18 +10,15 @@ import (
 	"github.com/joeecarter/health-import-server/request"
 )
 
-// TODO: Does this need struct tags??
 type InfluxConfig struct {
 	Hostname string `json:"hostname"`
 	Token    string `json:"token"`
 	Org      string `json:"org"`
 	Bucket   string `json:"bucket"`
-	//Debug    bool   `json:"debug"`
 }
 
 type InfluxMetricStore struct {
 	writeAPI api.WriteAPIBlocking
-	//debugLogging bool
 }
 
 func NewInfluxMetricStore(config InfluxConfig) *InfluxMetricStore {
@@ -38,7 +35,7 @@ func (store *InfluxMetricStore) Store(metrics []request.Metric) error {
 	pts := make([]*write.Point, 0)
 	for _, metric := range metrics {
 		for _, sample := range metric.Samples {
-			pts = append(pts, sampleToPoint(metric, sample))
+			pts = append(pts, ConvertSampleToPoint(metric, sample))
 		}
 	}
 
@@ -46,7 +43,7 @@ func (store *InfluxMetricStore) Store(metrics []request.Metric) error {
 	return store.writeAPI.WritePoint(context.Background(), pts...)
 }
 
-func sampleToPoint(metric request.Metric, sample request.Sample) *write.Point {
+func ConvertSampleToPoint(metric request.Metric, sample request.Sample) *write.Point {
 
 	p := influxdb2.NewPointWithMeasurement(metric.Name).
 		AddField("unit", metric.Unit).
@@ -75,24 +72,3 @@ func sampleToPoint(metric request.Metric, sample request.Sample) *write.Point {
 
 	return p
 }
-
-//type FlattenedPoint struct {
-//	Measurement string
-//	Timestamp   time.Time
-//	Fields      map[string]interface{}
-//}
-
-//func logPoint(pt *write.Point) {
-//	flat := FlattenedPoint{}
-//	flat.Measurement = pt.Name()
-//	flat.Timestamp = pt.Time()
-
-//	fields := make(map[string]interface{})
-//	for _, field := range pt.FieldList() {
-//		fields[field.Key] = field.Value
-//	}
-//	flat.Fields = fields
-
-//	b, _ := json.Marshal(flat)
-//	fmt.Println(string(b))
-//}
