@@ -7,14 +7,8 @@ fi
 echo "version=$VERSION"
 echo ""
 
-CGO_ENABLED=0 go build \
-	-ldflags="-X 'main.Version=$VERSION'" \
-	-o ./server cmd/server/main.go
-
-docker build -t joecarter/health-import-server:$VERSION .
+docker build --build-arg VERSION=$VERSION -t joecarter/health-import-server:$VERSION .
 docker tag joecarter/health-import-server:$VERSION joecarter/health-import-server:latest
-
-rm server
 
 echo ""
 echo "To publish the images:"
